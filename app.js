@@ -3,14 +3,35 @@ const debug = require('debug')('app');
 
 fs.readFile('jsonNest.json', 'utf8', (err, data) => {
   if (err) {
-    // console.error(err);
     debug(err);
     return;
   }
-  // parse JSON string to JSON object
-  const jsonNest = JSON.parse(data);
-  // jsonNest.forEach(db => {
-  // console.log(jsonNest);
-  debug(jsonNest);
-  // });
+
+  const generateNestedKeyNameAndValue = (input, nestedKeyName, keyValueArr) => {
+    if (typeof input === 'object') {
+    // array or object - iterate over them
+      const quoteString = Array.isArray(input) ? '' : "'";
+      Object.entries(input).forEach(([key, value]) => {
+        generateNestedKeyNameAndValue(
+          value,
+          // extend the key name
+          `${nestedKeyName}[${quoteString}${key}${quoteString}]`,
+          keyValueArr,
+        );
+      });
+    } else {
+    // string or number (end value)
+      keyValueArr.push([nestedKeyName, input]);
+    }
+  };
+
+  const output = Object.fromEntries(
+    Object.entries(JSON.parse(data)).map(([key, value]) => {
+      const generatedKeyValuePairs = [];
+      generateNestedKeyNameAndValue(value, '', generatedKeyValuePairs);
+      return [key, Object.fromEntries(generatedKeyValuePairs)];
+    }),
+  );
+
+  debug(output);
 });
