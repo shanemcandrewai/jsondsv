@@ -1,0 +1,14 @@
+    {
+      "row-0" : {
+        "['rec-0']['date']" : 20220121,
+        "['rec-0']['tags'][0]" : "val-0",
+        "['rec-1']['date']" : 20220116,
+        "['rec-1']['url']" : "https://example.com/a",
+        "['rec-1']['tags'][0]" : "val-0",
+        "['rec-1']['tags'][1]" : "val-1"
+        },
+      "row-1" : {
+        "['rec-0']['date']" : 20220116,
+        "['rec-0']['url'']" : "https://example.com/b"       
+      }
+    }
