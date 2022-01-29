@@ -5,6 +5,7 @@
     "eslint-plugin-import": "^2.25.4"
   },
   "dependencies": {
-    "debug": "^4.3.3"
+    "debug": "^4.3.3",
+    "lodash": "^4.17.21"
   }
 }
