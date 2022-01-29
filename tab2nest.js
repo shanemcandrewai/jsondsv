@@ -4,9 +4,9 @@
 const debug = require('debug')('app');
 // const fs = require('fs');
 // const data = fs.readFileSync('jsonTab.json', 'utf8');
-// const jstf = JSON.parse(data);
+// const jst = JSON.parse(data);
 
-const jstf = {
+const jst = {
   'row-0': {
     "['rec-0']['date']": 20220121,
     "['rec-0']['tags'][0]": 'val-0',
@@ -21,19 +21,16 @@ const jstf = {
   },
 };
 
-const jn = {};
+const jsn = {};
 let cnt = 0;
-const itout = (jst) => {
-  Object.entries(jst).forEach(([key, value]) => {
-    jn[key] = value;
+const t2n = (jso) => {
+  Object.entries(jso).forEach(([key, value]) => {
     cnt += 1;
     debug(cnt);
-    if (typeof jst[key] === 'object') {
-      itout(value);
-    }
+    if (typeof jso[key] === 'object') { t2n(value); } else { jsn[key] = value; }
   });
 };
-debug(jstf);
-// itout({ jstf: { a: 1 } });
-itout(jstf);
-debug(jn);
+debug(jst);
+// t2n({ jst: { a: 1 } });
+t2n(jst);
+debug(jsn);
