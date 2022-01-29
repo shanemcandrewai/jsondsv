@@ -27,13 +27,12 @@ const jsn = {
 };
 
 const jst = {};
-let cnt = 0;
-const n2t = (jso) => {
+const n2t = (jso, path) => {
   Object.entries(jso).forEach(([key, value]) => {
-    cnt += 1;
     if (typeof jso[key] === 'object') {
-      jst[key] = {};
-      n2t(value);
+      jst[`${path}.${key}`] = {};
+      debug(`${path}.${key}`);
+      n2t(value, `${path}.${key}`);
     } else {
       jst[key] = value;
     }
@@ -41,5 +40,5 @@ const n2t = (jso) => {
 };
 debug(jsn);
 // n2t({ jstf: { a: 1 } });
-n2t(jsn);
+n2t(jsn, '');
 debug(jst);
