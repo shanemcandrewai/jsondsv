@@ -1,28 +1,19 @@
-var data = fs.readFileSync('jsonTab.json', 'utf8');
-var jno = JSON.parse(data);
+const fs = require('fs');
+const debug = require('debug')('app');
 
-for (const property in jno) {
-  console.log(`${property}: ${jno[property]}`);
-}
-for (const property in jno) {
-  console.log(property);
-}
-
-for (const [key, value] of Object.entries(jno)) {
-  console.log(`${key}: ${value}`);
-}
-
-var jn = {};
-var itout = (jno) => {
-  for (const property in jno) {
-    console.log(`${property}: ${jno[property]}`);
-    if (typeof jno[property] === 'object') {
-      itout(jno[property])
+const data = fs.readFileSync('jsonTab.json', 'utf8');
+const jstf = JSON.parse(data);
+const jn = {};
+let cnt = 0;
+const itout = (jst) => {
+  for (const prop in jst) {
+    jn[prop] = jst[prop];
+    cnt++;
+    debug(cnt);
+    if (typeof jst[prop] === 'object') {
+      itout(jst[prop]);
     }
-    jn[property]['a'] = 1;
   }
-}
-itout(jno);
+};
+itout(jstf);
 jn;
-
-itout(jno['row-0']);
