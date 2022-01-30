@@ -27,28 +27,23 @@ const jsn = {
   },
 };
 
-const jst = {};
-const n2t = (jso, key1, path) => {
-  Object.entries(jso).forEach(([key, value]) => {
-    if (key1 !== undefined) {
-      path = key;
-    } else {
-      path += '.';
-      path += key;
-    }
+const n2t = (ob, path) => {
+  const jst = {};
+  Object.entries(ob).forEach(([key, value]) => {
+    const newpath = (path !== undefined) ? `${path}.${key}` : key;
 
-    if (typeof jso[key] === 'object') {
-      if (key1 !== undefined) {
-        n2t(value, key1, path);
-      } else {
-        n2t(value, key, path);
-      }
+    if (typeof value === 'object') {
+      Object.assign(jst, n2t(value, newpath));
     } else {
-      jst[path] = jso[key];
+      const col = {};
+      col[newpath.split(/\.(.+)/)[1]] = value;
+      debug(newpath.split('.')[0], col);
+      jst[newpath.split('.')[0]] = col;
+      // Object.assign(jst, jst[newpath.split('.')[0]] = col);
     }
   });
+  return jst;
 };
-debug(jsn);
-// n2t({ jstf: { a: 1 } });
-n2t(jsn, '');
-debug(jst);
+
+debug(n2t(jsn));
+// n2t(jsn);
