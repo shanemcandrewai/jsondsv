@@ -10,12 +10,13 @@ fs.readFile('jsonNest.json', 'utf8', (err, data) => {
   const generateNestedKeyNameAndValue = (input, nestedKeyName, keyValueArr) => {
     if (typeof input === 'object') {
     // array or object - iterate over them
-      const quoteString = Array.isArray(input) ? '' : "'";
+      // const quoteString = Array.isArray(input) ? '' : "'";
       Object.entries(input).forEach(([key, value]) => {
         generateNestedKeyNameAndValue(
           value,
           // extend the key name
-          `${nestedKeyName}[${quoteString}${key}${quoteString}]`,
+          // `${nestedKeyName}[${quoteString}${key}${quoteString}]`,
+          `${nestedKeyName}.${key}`,
           keyValueArr,
         );
       });
