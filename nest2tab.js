@@ -8,7 +8,7 @@ const debug = require('debug')('app');
 // const jstf = JSON.parse(data);
 
 const jsn = {
-  'row-0': {
+  'rowkey-0': {
     'rec-0': {
       date: 20220121,
       tags: ['val-0'],
@@ -19,7 +19,7 @@ const jsn = {
       tags: ['val-0', 'val-1'],
     },
   },
-  'row-1': {
+  'rowkey-1': {
     'rec-0': {
       date: 20220116,
       url: 'https://example.com/b',
@@ -27,32 +27,25 @@ const jsn = {
   },
 };
 
-const jst = {};
-const n2t = (ob, path) => {
+const n2t = (ob, path, jst) => {
+  const jstt = (jst !== undefined) ? jst : {};
   Object.entries(ob).forEach(([key, value]) => {
     const newpath = (path !== undefined) ? `${path}.${key}` : key;
 
     if (typeof value === 'object') {
-      Object.assign(jst, n2t(value, newpath));
+      Object.assign(jstt, n2t(value, newpath, jstt));
     } else {
-      const col = {};
-      const row = newpath.split('.')[0];
-      col[newpath.split(/\.(.+)/)[1]] = value;
-      debug(row, col);
-      // jst[newpath.split('.')[0]] = col;
-      // Object.assign(jst, jst[newpath.split('.')[0]] = col);
-      if (jst[row] === undefined) {
-        debug('xxx undef');
-        jst[row] = col;
+      const columns = {};
+      const rowkey = newpath.split('.')[0];
+      columns[newpath.split(/\.(.+)/)[1]] = value;
+      if (jstt[rowkey] === undefined) {
+        jstt[rowkey] = columns;
       } else {
-        debug('xxx def');
-        Object.assign(jst[newpath.split('.')[0]], col);
+        Object.assign(jstt[rowkey], columns);
       }
     }
   });
-  // return jst;
+  return jstt;
 };
 
-// debug(n2t(jsn));
-n2t(jsn);
-debug(jst);
+debug(n2t(jsn));
