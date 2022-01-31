@@ -27,8 +27,8 @@ const jsn = {
   },
 };
 
+const jst = {};
 const n2t = (ob, path) => {
-  const jst = {};
   Object.entries(ob).forEach(([key, value]) => {
     const newpath = (path !== undefined) ? `${path}.${key}` : key;
 
@@ -36,14 +36,23 @@ const n2t = (ob, path) => {
       Object.assign(jst, n2t(value, newpath));
     } else {
       const col = {};
+      const row = newpath.split('.')[0];
       col[newpath.split(/\.(.+)/)[1]] = value;
-      debug(newpath.split('.')[0], col);
-      jst[newpath.split('.')[0]] = col;
+      debug(row, col);
+      // jst[newpath.split('.')[0]] = col;
       // Object.assign(jst, jst[newpath.split('.')[0]] = col);
+      if (jst[row] === undefined) {
+        debug('xxx undef');
+        jst[row] = col;
+      } else {
+        debug('xxx def');
+        Object.assign(jst[newpath.split('.')[0]], col);
+      }
     }
   });
-  return jst;
+  // return jst;
 };
 
-debug(n2t(jsn));
-// n2t(jsn);
+// debug(n2t(jsn));
+n2t(jsn);
+debug(jst);
