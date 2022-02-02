@@ -7,32 +7,26 @@ fs.readFile('jsonNest.json', 'utf8', (err, data) => {
     return;
   }
 
-  const generateNestedKeyNameAndValue = (input, nestedKeyName, keyValueArr) => {
-    if (typeof input === 'object') {
-    // array or object - iterate over them
-      // const quoteString = Array.isArray(input) ? '' : "'";
-      Object.entries(input).forEach(([key, value]) => {
-        generateNestedKeyNameAndValue(
-          value,
-          // extend the key name
-          // `${nestedKeyName}[${quoteString}${key}${quoteString}]`,
-          `${nestedKeyName}.${key}`,
-          keyValueArr,
-        );
-      });
-    } else {
-    // string or number (end value)
-      keyValueArr.push([nestedKeyName, input]);
-    }
+  const n2t = (ob, path, jst) => {
+    const jstt = (jst !== undefined) ? jst : {};
+    Object.entries(ob).forEach(([key, value]) => {
+      const newpath = (path !== undefined) ? `${path}.${key}` : key;
+
+      if (typeof value === 'object') {
+        Object.assign(jstt, n2t(value, newpath, jstt));
+      } else {
+        const columns = {};
+        const rowkey = newpath.split('.')[0];
+        columns[newpath.split(/\.(.+)/)[1]] = value;
+        if (jstt[rowkey] === undefined) {
+          jstt[rowkey] = columns;
+        } else {
+          Object.assign(jstt[rowkey], columns);
+        }
+      }
+    });
+    return jstt;
   };
 
-  const output = Object.fromEntries(
-    Object.entries(JSON.parse(data)).map(([key, value]) => {
-      const generatedKeyValuePairs = [];
-      generateNestedKeyNameAndValue(value, '', generatedKeyValuePairs);
-      return [key, Object.fromEntries(generatedKeyValuePairs)];
-    }),
-  );
-
-  debug(output);
+  debug(n2t(JSON.parse(data)));
 });
