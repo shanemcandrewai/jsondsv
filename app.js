@@ -11,8 +11,6 @@ fs.readFile('jsonNest.json', 'utf8', (err, data) => {
     const jstt = (jst !== undefined) ? jst : {};
     Object.entries(ob).forEach(([key, value]) => {
       const newpath = Array.isArray(ob) ? (path !== undefined) ? `${path}[${key}]` : `[${key}]` : (path !== undefined) ? `${path}.${key}` : key;
-      
-
       if (typeof value === 'object') {
         Object.assign(jstt, n2t(value, newpath, jstt));
       } else {
@@ -26,8 +24,10 @@ fs.readFile('jsonNest.json', 'utf8', (err, data) => {
         }
       }
     });
-    return jstt;
+    fs.writeFile('jst.json', JSON.stringify(jstt), function (err) {
+      if (err) return debug(err);
+});
   };
 
-  debug(n2t(JSON.parse(data)));
+  n2t(JSON.parse(data));
 });
