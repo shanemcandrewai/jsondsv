@@ -10,8 +10,7 @@ fs.readFile('jsonNest.json', 'utf8', (err, data) => {
   const n2t = (ob, path, jst) => {
     const jstt = (jst !== undefined) ? jst : {};
     Object.entries(ob).forEach(([key, value]) => {
-      let newpath;
-      Array.isArray(ob) ? newpath = (path !== undefined) ? `${path}[${key}]` : `[${key}]` : newpath = (path !== undefined) ? `${path}.${key}` : key;
+      const newpath = Array.isArray(ob) ? (path !== undefined) ? `${path}[${key}]` : `[${key}]` : (path !== undefined) ? `${path}.${key}` : key;
       
 
       if (typeof value === 'object') {
