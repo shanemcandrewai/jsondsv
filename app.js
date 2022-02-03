@@ -28,9 +28,25 @@ const n2t = (ob, path, jst) => {
   });
 };
 
-const t2n = (ob, path, jsn) => {
-  const jsnn = (jsn !== undefined) ? jsn : { xxx: 2 };
-  fs.writeFile('jsn.json', JSON.stringify(jsnn), (errw) => {
+const t2n = (ob) => {
+  const jsn = {};
+  Object.entries(ob).forEach(([rowkey, columns]) => {
+    Object.entries(columns).forEach(([path, value]) => {
+      const keys = path.split('.');
+      const pp = {};
+      while (keys.length > 0) {
+        const kk = keys.pop();
+        if (Object.keys(pp).length === 0) {
+          pp[kk] = value;
+        } else {
+          pp[kk] = pp;
+        }
+      }
+      jsn[rowkey] = pp;
+    });
+  });
+
+  fs.writeFile('jsn.json', JSON.stringify(jsn), (errw) => {
     if (errw) { debug(errw); }
   });
 };
