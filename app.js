@@ -1,5 +1,6 @@
 const fs = require('fs');
 const debug = require('debug')('app');
+const set = require('lodash/set');
 
 const n2t = (ob, path, jst) => {
   const jstt = (jst !== undefined) ? jst : {};
@@ -32,17 +33,7 @@ const t2n = (ob) => {
   const jsn = {};
   Object.entries(ob).forEach(([rowkey, columns]) => {
     Object.entries(columns).forEach(([path, value]) => {
-      const keys = path.split('.');
-      const pp = {};
-      while (keys.length > 0) {
-        const kk = keys.pop();
-        if (Object.keys(pp).length === 0) {
-          pp[kk] = value;
-        } else {
-          pp[kk] = pp;
-        }
-      }
-      jsn[rowkey] = pp;
+      set(jsn, `a${rowkey}.${path}`, value);
     });
   });
 
