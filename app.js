@@ -33,7 +33,7 @@ const t2n = (ob) => {
   const jsn = {};
   Object.entries(ob).forEach(([rowkey, columns]) => {
     Object.entries(columns).forEach(([path, value]) => {
-      set(jsn, `a${rowkey}.${path}`, value);
+      set(jsn, `${rowkey}.${path}`, value);
     });
   });
 
