@@ -24,9 +24,10 @@ const n2t = (ob, path, jst) => {
       }
     }
   });
-  fs.writeFile('jst.json', JSON.stringify(jstt), (errw) => {
-    if (errw) { debug(errw); }
+  fs.writeFile('jst.json', JSON.stringify(jstt), (err) => {
+    if (err) { debug(err); }
   });
+  return jstt;
 };
 
 const t2n = (ob) => {
@@ -37,9 +38,26 @@ const t2n = (ob) => {
     });
   });
 
-  fs.writeFile('jsn.json', JSON.stringify(jsn), (errw) => {
-    if (errw) { debug(errw); }
+  fs.writeFile('jsn.json', JSON.stringify(jsn), (err) => {
+    if (err) { debug(err); }
   });
+};
+
+const tsv = (jst) => {
+  const colLables = new Set();
+  let tsz = '';
+  // Object.entries(jst).forEach(([rowkey, columns]) => {
+  Object.values(jst).forEach((columns) => {
+    // Object.entries(columns).forEach(([path, value]) => {
+    Object.keys(columns).forEach((path) => {
+      colLables.add(path);
+    });
+  });
+  // for (const item of colLables)
+  Object.values([...colLables]).forEach((label) => {
+    tsz += `${label}\t`;
+  });
+  debug(tsz);
 };
 
 fs.readFile('jsonNest.json', 'utf8', (err, data) => {
@@ -48,7 +66,8 @@ fs.readFile('jsonNest.json', 'utf8', (err, data) => {
     return;
   }
 
-  n2t(JSON.parse(data));
+  const jst = n2t(JSON.parse(data));
+  tsv(jst);
 });
 
 fs.readFile('jst.json', 'utf8', (err, data) => {
