@@ -57,6 +57,7 @@ const tsv = (jst) => {
   Object.values([...colLables]).forEach((label) => {
     tsz += `${label}\t`;
   });
+  tsz = tsz.replace(/.$/, '\n');
   debug(tsz);
 };
 
