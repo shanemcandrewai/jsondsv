@@ -45,20 +45,32 @@ const t2n = (ob) => {
 
 const tsv = (jst) => {
   const colLables = new Set();
-  let tsz = '';
-  // Object.entries(jst).forEach(([rowkey, columns]) => {
-  Object.values(jst).forEach((columns) => {
-    // Object.entries(columns).forEach(([path, value]) => {
-    Object.keys(columns).forEach((path) => {
+  const columns = [];
+  let tsz = 'row\t';
+  Object.values(jst).forEach((row) => {
+    Object.keys(row).forEach((path) => {
       colLables.add(path);
     });
   });
-  // for (const item of colLables)
   Object.values([...colLables]).forEach((label) => {
+    columns.push(label);
     tsz += `${label}\t`;
   });
   tsz = tsz.replace(/.$/, '\n');
-  debug(tsz);
+  Object.entries(jst).forEach(([row, cols]) => {
+    tsz += `${row}\t`;
+    Object.entries(cols).forEach(([path, value]) => {
+      columns.forEach((element) => {
+        if (element === path) tsz += `${value}\t`;
+      });
+      tsz += '\t';
+    });
+    tsz += '\n';
+  });
+
+  fs.writeFile('jst.tsv', tsz, (err) => {
+    if (err) { debug(err); }
+  });
 };
 
 fs.readFile('jsonNest.json', 'utf8', (err, data) => {
