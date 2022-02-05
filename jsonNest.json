@@ -9,11 +9,7 @@
       },
       "rec-1": {
         "date": 20220116,
-        "url": "https://example.com/a",
-        "tags": [
-          "val-0",
-          "val-1"
-        ]
+        "url": "https://example.com/a"
       }
     }
   },
