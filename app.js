@@ -15,7 +15,8 @@ const t2n = (ob) => {
 };
 
 const n2t = (ob, path, jst) => {
-  const jstt = (jst !== undefined) ? jst : {};
+  // const jstt = (jst !== undefined) ? jst : {};
+  let jstt = (jst !== undefined) ? jst : '';
   Object.entries(ob).forEach(([key, value]) => {
     let newpath;
     if (Array.isArray(ob)) {
@@ -24,16 +25,19 @@ const n2t = (ob, path, jst) => {
       newpath = (path !== undefined) ? `${path}.${key}` : key;
     }
     if (typeof value === 'object') {
-      Object.assign(jstt, n2t(value, newpath, jstt));
+      // Object.assign(jstt, n2t(value, newpath, jstt));
+      debug('xxx', newpath);
+      jstt += n2t(value, newpath, jstt);
     } else {
-      const columns = {};
-      const rowkey = newpath.split('.')[0];
-      columns[newpath.split(/\.(.+)/)[1]] = value;
-      if (jstt[rowkey] === undefined) {
-        jstt[rowkey] = columns;
-      } else {
-        Object.assign(jstt[rowkey], columns);
-      }
+      debug('yyy', newpath.split(/\.(.+)/)[1]);
+      // const columns = {};
+      // const rowkey = newpath.split('.')[0];
+      // columns[newpath.split(/\.(.+)/)[1]] = value;
+      // if (jstt[rowkey] === undefined) {
+      // jstt[rowkey] = columns;
+      // } else {
+      // Object.assign(jstt[rowkey], columns);
+      // }
     }
   });
   return jstt;
