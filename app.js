@@ -24,9 +24,6 @@ const n2t = (ob, path, jst) => {
       }
     }
   });
-  fs.writeFile('jst.json', JSON.stringify(jstt), (err) => {
-    if (err) { debug(err); }
-  });
   return jstt;
 };
 
@@ -43,51 +40,12 @@ const t2n = (ob) => {
   });
 };
 
-const tsv = (jst) => {
-  const colLables = new Set();
-  const columns = [];
-  let tsz = 'row\t';
-  Object.values(jst).forEach((row) => {
-    Object.keys(row).forEach((path) => {
-      colLables.add(path);
-    });
-  });
-  Object.values([...colLables]).forEach((label) => {
-    columns.push(label);
-    tsz += `${label}\t`;
-  });
-  tsz = tsz.replace(/.$/, '\n');
-  Object.entries(jst).forEach(([row, cols]) => {
-    tsz += `${row}\t`;
-    Object.entries(cols).forEach(([path, value]) => {
-      columns.forEach((element) => {
-        if (element === path) tsz += `${value}\t`;
-      });
-      tsz += '\t';
-    });
-    tsz += '\n';
-  });
-
-  fs.writeFile('jst.tsv', tsz, (err) => {
-    if (err) { debug(err); }
-  });
-};
-
 fs.readFile('jsonNest.json', 'utf8', (err, data) => {
   if (err) {
     debug(err);
     return;
   }
-
-  const jst = n2t(JSON.parse(data));
-  tsv(jst);
-});
-
-fs.readFile('jst.json', 'utf8', (err, data) => {
-  if (err) {
-    debug(err);
-    return;
-  }
-
-  t2n(JSON.parse(data));
+  fs.writeFile('jsn.tsv', n2t(JSON.parse(data)), (errw) => {
+    if (errw) { debug(errw); }
+  });
 });
