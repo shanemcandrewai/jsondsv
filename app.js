@@ -2,6 +2,18 @@ const fs = require('fs');
 const debug = require('debug')('app');
 const set = require('lodash/set');
 
+const t2n = (ob) => {
+  const jsn = {};
+  Object.entries(ob).forEach(([rowkey, columns]) => {
+    Object.entries(columns).forEach(([path, value]) => {
+      set(jsn, `${rowkey}.${path}`, value);
+    });
+  });
+  fs.writeFile('jsn.json', JSON.stringify(jsn), (err) => {
+    if (err) { debug(err); }
+  });
+};
+
 const n2t = (ob, path, jst) => {
   const jstt = (jst !== undefined) ? jst : {};
   Object.entries(ob).forEach(([key, value]) => {
@@ -27,25 +39,13 @@ const n2t = (ob, path, jst) => {
   return jstt;
 };
 
-const t2n = (ob) => {
-  const jsn = {};
-  Object.entries(ob).forEach(([rowkey, columns]) => {
-    Object.entries(columns).forEach(([path, value]) => {
-      set(jsn, `${rowkey}.${path}`, value);
-    });
-  });
-
-  fs.writeFile('jsn.json', JSON.stringify(jsn), (err) => {
-    if (err) { debug(err); }
-  });
-};
-
 fs.readFile('jsonNest.json', 'utf8', (err, data) => {
   if (err) {
     debug(err);
     return;
   }
-  fs.writeFile('jsn.tsv', n2t(JSON.parse(data)), (errw) => {
+  const obj = JSON.parse(data);
+  fs.writeFile('jsn.tsv', JSON.stringify(n2t(obj), null, 2), (errw) => {
     if (errw) { debug(errw); }
   });
 });
