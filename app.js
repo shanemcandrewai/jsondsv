@@ -15,8 +15,7 @@ const t2n = (ob) => {
 };
 
 const n2t = (ob, path, jst) => {
-  // const jstt = (jst !== undefined) ? jst : {};
-  let jstt = (jst !== undefined) ? jst : '';
+  let tsv = (jst === undefined) ? '' : jst;
   Object.entries(ob).forEach(([key, value]) => {
     let newpath;
     if (Array.isArray(ob)) {
@@ -25,22 +24,26 @@ const n2t = (ob, path, jst) => {
       newpath = (path !== undefined) ? `${path}.${key}` : key;
     }
     if (typeof value === 'object') {
-      // Object.assign(jstt, n2t(value, newpath, jstt));
-      debug('xxx', newpath);
-      jstt += n2t(value, newpath, jstt);
+      tsv = n2t(value, newpath, tsv);
     } else {
-      debug('yyy', newpath.split(/\.(.+)/)[1]);
+      const columnLabel = newpath.split(/\.(.+)/)[1];
+      if (!tsv.includes(columnLabel)) {
+        if (tsv.slice(-1) !== ' ' && tsv.length) {
+          tsv += '\t';
+        }
+        tsv += columnLabel;
+      }
       // const columns = {};
       // const rowkey = newpath.split('.')[0];
       // columns[newpath.split(/\.(.+)/)[1]] = value;
-      // if (jstt[rowkey] === undefined) {
-      // jstt[rowkey] = columns;
+      // if (tsv[rowkey] === undefined) {
+      // tsv[rowkey] = columns;
       // } else {
-      // Object.assign(jstt[rowkey], columns);
+      // Object.assign(tsv[rowkey], columns);
       // }
     }
   });
-  return jstt;
+  return tsv;
 };
 
 fs.readFile('jsonNest.json', 'utf8', (err, data) => {
@@ -49,7 +52,7 @@ fs.readFile('jsonNest.json', 'utf8', (err, data) => {
     return;
   }
   const obj = JSON.parse(data);
-  fs.writeFile('jsn.tsv', JSON.stringify(n2t(obj), null, 2), (errw) => {
+  fs.writeFile('jsn.tsv', n2t(obj), (errw) => {
     if (errw) { debug(errw); }
   });
 });
