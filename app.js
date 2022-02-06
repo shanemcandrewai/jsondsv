@@ -24,24 +24,40 @@ const jsonToTab = (obj, path, tsv) => {
       if (indColumnLabel === -1) {
         if (tsvBuild.length) {
           // Add new column
+          debug('yyy', columnLabel, value);
           tsvBuild = `${header}\t${columnLabel}${tsvBuild.slice(indEndHeader)}`;
           tsvBuild = `${tsvBuild}\t${value}`;
         } else {
+          debug('xxx', columnLabel, value);
           // Add first column
           tsvBuild = `${columnLabel}\n`;
           tsvBuild = `${tsvBuild}${value}`;
         }
       } else if (tsvBuild.slice(-1) === '\n') {
-        // Add first value in row
+        // Add first value in new row
+        debug('fvn', columnLabel, value);
         tsvBuild = `${tsvBuild}${value}`;
       } else {
-        // Add subsequent value in row
-        // TODO : append tabs according to column position in header
-        tsvBuild = `${tsvBuild}\t${value}`;
+        // Calculate column position and add subsequent value in row
+        debug('icl', indColumnLabel);
+        const labelNumber = (header.slice(0, indColumnLabel).match(/\t/g) || []).length;
+        debug('hds', header.slice(0, indColumnLabel));
+        debug('tsv', tsvBuild);
+        const currentRow = tsvBuild.split(/\n(.+)$/)[1];
+        debug('hea', header);
+        debug('cro', currentRow);
+        const currColNumber = (currentRow.match(/\t/g) || []).length;
+        debug('sub', labelNumber, columnLabel, currColNumber, value);
+        for (let i = 0; i < (labelNumber - currColNumber); i += 1) {
+          tsvBuild = `${tsvBuild}\t`;
+        }
+        tsvBuild = `${tsvBuild}${value}`;
       }
     }
   });
   if (path !== undefined && !path.includes('.')) {
+    // End of row
+    debug('eow', path);
     tsvBuild = `${tsvBuild}\n`;
   }
   return tsvBuild;
