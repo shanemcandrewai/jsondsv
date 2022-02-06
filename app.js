@@ -8,46 +8,40 @@ const jsonToTab = (obj, path, tsv) => {
   Object.entries(obj).forEach(([key, value]) => {
     let newpath;
 
-    // if (Array.isArray(obj)) {
-    // newpath = (path === undefined) ? `[${key}]` : `${path}[${key}]`;
-    // } else {
-    // newpath = (path === undefined) ? key : `${path}.${key}`;
-    // }
-
-    if (path === undefined) {
-      newpath = (Array.isArray(obj)) ? `[${key}]` : key;
+    if (Array.isArray(obj)) {
+      newpath = (path === undefined) ? `[${key}]` : `${path}[${key}]`;
     } else {
-      newpath = (Array.isArray(obj)) ? `${path}[${key}]` : `${path}.${key}`;
+      newpath = (path === undefined) ? key : `${path}.${key}`;
     }
 
     if (typeof value === 'object') {
       tsvBuild = jsonToTab(value, newpath, tsvBuild);
     } else {
-      // Update column headers if necessary
       const columnLabel = newpath.split(/\.(.+)/)[1];
-      const indColumnLabel = tsvBuild.indexOf(columnLabel);
       const indEndHeader = tsvBuild.indexOf('\n');
-      let numberCols;
+      const header = tsvBuild.slice(0, indEndHeader);
+      const indColumnLabel = header.indexOf(columnLabel);
       if (indColumnLabel === -1) {
         if (tsvBuild.length) {
-          tsvBuild = `${tsvBuild.slice(0, tsvBuild.lastIndexOf('\n'))}\t${columnLabel}${tsvBuild.slice(indEndHeader)}`;
-          numberCols = ((tsvBuild.slice(0, indColumnLabel).match(/\t/g) || []).length);
+          // Add new column
+          tsvBuild = `${header}\t${columnLabel}${tsvBuild.slice(indEndHeader)}`;
+          tsvBuild = `${tsvBuild}\t${value}`;
         } else {
+          // Add first column
           tsvBuild = `${columnLabel}\n`;
-          numberCols = 0;
+          tsvBuild = `${tsvBuild}${value}`;
         }
+      } else if (tsvBuild.slice(-1) === '\n') {
+        // Add first value in row
+        tsvBuild = `${tsvBuild}${value}`;
+      } else {
+        // Add subsequent value in row
+        // TODO : append tabs according to column position in header
+        tsvBuild = `${tsvBuild}\t${value}`;
       }
-      // Append separators for empty columns and value
-      // const lastNewline = tsvBuild.lastIndexOf('\n');
-
-      // debug(lastNewline, columnLabel, value)
-      for (let i = 0; i < numberCols; i += 1) {
-        tsvBuild = `${tsvBuild}\t`;
-      }
-      tsvBuild = `${tsvBuild}${value}`;
     }
   });
-  if ((path === undefined) || !path.includes('.')) {
+  if (path !== undefined && !path.includes('.')) {
     tsvBuild = `${tsvBuild}\n`;
   }
   return tsvBuild;
