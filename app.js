@@ -3,6 +3,21 @@ const debug = require('debug')('app');
 const set = require('lodash/set');
 const isEqual = require('lodash/isEqual');
 
+const calcSeparators = (columnLabel, tsvBuild) => {
+  const indEndHeader = tsvBuild.indexOf('\n');
+  const header = tsvBuild.slice(0, indEndHeader);
+  const indColumnLabel = header.indexOf(columnLabel);
+  const labelNumber = (header.slice(0, indColumnLabel).match(/\t/g) || []).length;
+  const currentRow = tsvBuild.split(/\n(.+)$/)[1];
+  const currColNumber = (currentRow.match(/\t/g) || []).length;
+  const addSeparators = labelNumber - currColNumber;
+  let separators = '';
+  for (let i = 0; i < addSeparators; i += 1) {
+    separators = `${separators}\t`;
+  }
+  return separators;
+};
+
 const jsonToTab = (obj, path, tsv) => {
   let tsvBuild = (tsv === undefined) ? '' : tsv;
   Object.entries(obj).forEach(([key, value]) => {
@@ -21,55 +36,51 @@ const jsonToTab = (obj, path, tsv) => {
       const indEndHeader = tsvBuild.indexOf('\n');
       const header = tsvBuild.slice(0, indEndHeader);
       const indColumnLabel = header.indexOf(columnLabel);
+
       if (indColumnLabel === -1) {
         if (tsvBuild.length) {
           // Add new column
-          debug('yyy', columnLabel, value);
           tsvBuild = `${header}\t${columnLabel}${tsvBuild.slice(indEndHeader)}`;
-          tsvBuild = `${tsvBuild}\t${value}`;
+          const separators = calcSeparators(columnLabel, tsvBuild);
+          tsvBuild = `${tsvBuild}${separators}${value}`;
         } else {
-          debug('xxx', columnLabel, value);
           // Add first column
           tsvBuild = `${columnLabel}\n`;
           tsvBuild = `${tsvBuild}${value}`;
         }
       } else if (tsvBuild.slice(-1) === '\n') {
         // Add first value in new row
-        debug('fvn', columnLabel, value);
         tsvBuild = `${tsvBuild}${value}`;
       } else {
         // Calculate column position and add subsequent value in row
-        debug('icl', indColumnLabel);
-        const labelNumber = (header.slice(0, indColumnLabel).match(/\t/g) || []).length;
-        debug('hds', header.slice(0, indColumnLabel));
-        debug('tsv', tsvBuild);
-        const currentRow = tsvBuild.split(/\n(.+)$/)[1];
-        debug('hea', header);
-        debug('cro', currentRow);
-        const currColNumber = (currentRow.match(/\t/g) || []).length;
-        debug('sub', labelNumber, columnLabel, currColNumber, value);
-        for (let i = 0; i < (labelNumber - currColNumber); i += 1) {
-          tsvBuild = `${tsvBuild}\t`;
-        }
-        tsvBuild = `${tsvBuild}${value}`;
+        const separators = calcSeparators(columnLabel, tsvBuild);
+        tsvBuild = `${tsvBuild}${separators}${value}`;
       }
     }
   });
   if (path !== undefined && !path.includes('.')) {
     // End of row
-    debug('eow', path);
     tsvBuild = `${tsvBuild}\n`;
   }
   return tsvBuild;
 };
 
-const tabToJson = (tsvBuild) => {
+const tabToJson = (tsv) => {
   const jsonObj = {};
-  Object.entries(tsvBuild).forEach(([rowkey, columns]) => {
-    Object.entries(columns).forEach(([path, value]) => {
-      set(jsonObj, `${rowkey}.${path}`, value);
-    });
+  const rows = tsv.split('\n');
+  let paths;
+  rows.forEach((element, index) => {
+    if (!index) {
+      paths = element.split('\t');
+    } else {
+      const values = element.split('\t');
+      values.forEach((element2, index2) => {
+        const path = `[${index - 1}]${paths[index2]}`;
+        set(jsonObj, path, element2);
+      });
+    }
   });
+  debug(jsonObj);
   return jsonObj;
 };
 
@@ -89,7 +100,7 @@ switch (process.argv[2].slice(-5)) {
     break;
 
   default:
-    fs.readFile('nested.tsv', 'utf8', (errt, tsvBuild) => {
+    fs.readFile('nested.tsv', 'utf8', (errt, tsvFile) => {
       if (errt) {
         debug(errt);
         return;
@@ -99,7 +110,8 @@ switch (process.argv[2].slice(-5)) {
           debug(errj);
           return;
         }
-        debug('matched', isEqual(tabToJson(tsvBuild), JSON.parse(jsonObj)));
+        const tsv = tabToJson(tsvFile);
+        debug('matched', isEqual(tsv, JSON.parse(jsonObj)));
       });
     });
 }
