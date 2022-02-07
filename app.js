@@ -36,26 +36,32 @@ const testTSV = 'row\trec-0.date\trec-0.tags[0]\trec-1.date\trec-1.url\trec-0.ur
 + '0\t20220121\tval-0\t20220116\thttps://example.com/a\n'
 + '1\t20220116\t\t\t\thttps://example.com/b\tval-0\tval-1\n';
 
-const calcSeparators = (columnLabel, tsvBuild) => {
-  const indEndHeader = tsvBuild.indexOf('\n');
+const calcSeparators = (columnLabel, tsvBuild, colSep, lineSep) => {
+  const colSepChar = (colSep === undefined) ? '\t' : colSep;
+  const lineSepChar = (lineSep === undefined) ? '\n' : lineSep;
+  const colSepRegex = new RegExp(colSepChar, 'g');
+  const lineSepRegex = new RegExp(`${lineSepChar}(.+)$`, 'g');
+  const indEndHeader = tsvBuild.indexOf(lineSepChar);
   const header = tsvBuild.slice(0, indEndHeader);
   const indColumnLabel = header.indexOf(columnLabel);
-  const labelNumber = (header.slice(0, indColumnLabel).match(/\t/g) || []).length;
-  const currentRow = tsvBuild.split(/\n(.+)$/)[1];
-  const currColNumber = (currentRow.match(/\t/g) || []).length;
+  const labelNumber = (header.slice(0, indColumnLabel).match(colSepRegex) || []).length;
+  const currentRow = tsvBuild.split(lineSepRegex)[1];
+  const currColNumber = (currentRow.match(colSepRegex) || []).length;
   const addSeparators = labelNumber - currColNumber;
+
   let separators = '';
   for (let i = 0; i < addSeparators; i += 1) {
-    separators = `${separators}\t`;
+    separators = `${separators}${colSepChar}`;
   }
   return separators;
 };
 
-const JSONToTab = (obj, path, tsv) => {
+const JSONToTable = (obj, path, tsv, colSep, lineSep) => {
   let tsvBuild = (tsv === undefined) ? '' : tsv;
+  const colSepChar = (colSep === undefined) ? '\t' : colSep;
+  const lineSepChar = (lineSep === undefined) ? '\n' : lineSep;
   Object.entries(obj).forEach(([key, value]) => {
     let newpath;
-
     if (Array.isArray(obj)) {
       newpath = (path === undefined) ? `[${key}]` : `${path}[${key}]`;
     } else {
@@ -63,25 +69,25 @@ const JSONToTab = (obj, path, tsv) => {
     }
 
     if (typeof value === 'object') {
-      tsvBuild = JSONToTab(value, newpath, tsvBuild);
+      tsvBuild = JSONToTable(value, newpath, tsvBuild);
     } else {
       const columnLabel = newpath.split(/\.(.+)/)[1];
-      const indEndHeader = tsvBuild.indexOf('\n');
+      const indEndHeader = tsvBuild.indexOf(lineSepChar);
       const header = tsvBuild.slice(0, indEndHeader);
       const indColumnLabel = header.indexOf(columnLabel);
 
       if (indColumnLabel === -1) {
         if (tsvBuild.length) {
           // Add new column
-          tsvBuild = `${header}\t${columnLabel}${tsvBuild.slice(indEndHeader)}`;
-          const separators = calcSeparators(columnLabel, tsvBuild);
+          tsvBuild = `${header}${colSepChar}${columnLabel}${tsvBuild.slice(indEndHeader)}`;
+          const separators = calcSeparators(columnLabel, tsvBuild, colSepChar);
           tsvBuild = `${tsvBuild}${separators}${value}`;
         } else {
           // Add first column
-          tsvBuild = `${columnLabel}\n`;
+          tsvBuild = `${columnLabel}${lineSepChar}`;
           tsvBuild = `${tsvBuild}${value}`;
         }
-      } else if (tsvBuild.slice(-1) === '\n') {
+      } else if (tsvBuild.slice(-1) === lineSepChar) {
         // Add first value in new row
         tsvBuild = `${tsvBuild}${value}`;
       } else {
@@ -93,27 +99,28 @@ const JSONToTab = (obj, path, tsv) => {
   });
   if (path !== undefined && !path.includes('.')) {
     // End of row
-    tsvBuild = `${tsvBuild}\n`;
+    tsvBuild = `${tsvBuild}${lineSepChar}`;
   }
   return tsvBuild;
 };
 
-const tabToJSON = (tsv) => {
+const tableToJSON = (tsv, colSep, lineSep) => {
+  const colSepChar = (colSep === undefined) ? '\t' : colSep;
+  const lineSepChar = (lineSep === undefined) ? '\n' : lineSep;
   const jsonArr = [];
   let rowObj = {};
-  const rows = tsv.split('\n');
+  const rows = tsv.split(lineSepChar);
   let paths;
   rows.forEach((row, rowInd) => {
     if (!rowInd) {
-      paths = row.split('\t');
+      paths = row.split(colSepChar);
     } else {
-      const values = row.split('\t');
+      const values = row.split(colSepChar);
       values.forEach((value, columInd) => {
         const path = `${paths[columInd]}`;
-
         if (value) {
-// TODO if value is integer remove quotes
-          set(rowObj, path, value);
+          const valueNum = value * 1;
+          set(rowObj, path, Number.isNaN(valueNum) ? value : valueNum);
         }
       });
       if (Object.keys(rowObj).length) {
@@ -125,6 +132,7 @@ const tabToJSON = (tsv) => {
   return jsonArr;
 };
 
+let sepValueString;
 switch (process.argv[2].slice(-4)) {
   case 'json':
     fs.readFile(process.argv[2], 'utf8', (err, data) => {
@@ -133,7 +141,7 @@ switch (process.argv[2].slice(-4)) {
         return;
       }
       const fileOut = `${process.argv[2].split(/\.(.+)/)[0]}.tsv`;
-      fs.writeFile(fileOut, JSONToTab(JSON.parse(data)), (errw) => {
+      fs.writeFile(fileOut, JSONToTable(JSON.parse(data)), (errw) => {
         if (errw) { debug(errw); }
       });
     });
@@ -146,7 +154,7 @@ switch (process.argv[2].slice(-4)) {
         return;
       }
       const fileOut = `${process.argv[2].split(/\.(.+)/)[0]}.json`;
-      fs.writeFile(fileOut, tabToJSON(data), (errw) => {
+      fs.writeFile(fileOut, tableToJSON(data), (errw) => {
         if (errw) { debug(errw); }
       });
     });
@@ -154,9 +162,8 @@ switch (process.argv[2].slice(-4)) {
 
   default: // test
 
-    debug('matched JSON', isEqual(tabToJSON(testTSV), testJSON));
-    debug(tabToJSON(testTSV));
-    debug(testJSON);
-
-    debug('matched TSV', JSONToTab(testJSON) === testTSV);
+    sepValueString = JSONToTable(testJSON);
+    debug('matched test TSV', sepValueString === testTSV);
+    debug('matched test JSON', isEqual(tableToJSON(testTSV), testJSON));
+    debug('matched reverse JSON', isEqual(tableToJSON(sepValueString), testJSON));
 }
