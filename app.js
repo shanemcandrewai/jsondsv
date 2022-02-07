@@ -3,6 +3,39 @@ const debug = require('debug')('app');
 const set = require('lodash/set');
 const isEqual = require('lodash/isEqual');
 
+const testJSON = [
+  {
+    row: 0,
+    'rec-0': {
+      date: 20220121,
+      tags: [
+        'val-0',
+      ],
+    },
+    'rec-1': {
+      date: 20220116,
+      url: 'https://example.com/a',
+    },
+  },
+  {
+    row: 1,
+    'rec-0': {
+      date: 20220116,
+      url: 'https://example.com/b',
+    },
+    'rec-1': {
+      tags: [
+        'val-0',
+        'val-1',
+      ],
+    },
+  },
+];
+
+const testTSV = 'row\trec-0.date\trec-0.tags[0]\trec-1.date\trec-1.url\trec-0.url\trec-1.tags[0]\trec-1.tags[1]\n'
++ '0\t20220121\tval-0\t20220116\thttps://example.com/a\n'
++ '1\t20220116\t\t\t\thttps://example.com/b\tval-0\tval-1\n';
+
 const calcSeparators = (columnLabel, tsvBuild) => {
   const indEndHeader = tsvBuild.indexOf('\n');
   const header = tsvBuild.slice(0, indEndHeader);
@@ -18,7 +51,7 @@ const calcSeparators = (columnLabel, tsvBuild) => {
   return separators;
 };
 
-const jsonToTab = (obj, path, tsv) => {
+const JSONToTab = (obj, path, tsv) => {
   let tsvBuild = (tsv === undefined) ? '' : tsv;
   Object.entries(obj).forEach(([key, value]) => {
     let newpath;
@@ -30,7 +63,7 @@ const jsonToTab = (obj, path, tsv) => {
     }
 
     if (typeof value === 'object') {
-      tsvBuild = jsonToTab(value, newpath, tsvBuild);
+      tsvBuild = JSONToTab(value, newpath, tsvBuild);
     } else {
       const columnLabel = newpath.split(/\.(.+)/)[1];
       const indEndHeader = tsvBuild.indexOf('\n');
@@ -65,7 +98,7 @@ const jsonToTab = (obj, path, tsv) => {
   return tsvBuild;
 };
 
-const tabToJson = (tsv) => {
+const tabToJSON = (tsv) => {
   const jsonObj = {};
   const rows = tsv.split('\n');
   let paths;
@@ -84,34 +117,35 @@ const tabToJson = (tsv) => {
   return jsonObj;
 };
 
-switch (process.argv[2].slice(-5)) {
-  case '.json':
+switch (process.argv[2].slice(-4)) {
+  case 'json':
     fs.readFile(process.argv[2], 'utf8', (err, data) => {
       if (err) {
         debug(err);
         return;
       }
-      const obj = JSON.parse(data);
       const fileOut = `${process.argv[2].split(/\.(.+)/)[0]}.tsv`;
-      fs.writeFile(fileOut, jsonToTab(obj), (errw) => {
+      fs.writeFile(fileOut, JSONToTab(JSON.parse(data)), (errw) => {
         if (errw) { debug(errw); }
       });
     });
     break;
 
-  default:
-    fs.readFile('nested.tsv', 'utf8', (errt, tsvFile) => {
-      if (errt) {
-        debug(errt);
+  case '.tsv':
+    fs.readFile(process.argv[2], 'utf8', (err, data) => {
+      if (err) {
+        debug(err);
         return;
       }
-      fs.readFile('nested.json', 'utf8', (errj, jsonObj) => {
-        if (errj) {
-          debug(errj);
-          return;
-        }
-        const tsv = tabToJson(tsvFile);
-        debug('matched', isEqual(tsv, JSON.parse(jsonObj)));
+      const fileOut = `${process.argv[2].split(/\.(.+)/)[0]}.json`;
+      fs.writeFile(fileOut, tabToJSON(data), (errw) => {
+        if (errw) { debug(errw); }
       });
     });
+    break;
+    
+  default: // test
+
+    debug('matched JSON', isEqual(tabToJSON(testTSV), testJSON));
+    debug('matched TSV', JSONToTab(testJSON) === testTSV);
 }
