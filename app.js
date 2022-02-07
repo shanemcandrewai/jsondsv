@@ -99,22 +99,30 @@ const JSONToTab = (obj, path, tsv) => {
 };
 
 const tabToJSON = (tsv) => {
-  const jsonObj = {};
+  const jsonArr = [];
+  let rowObj = {};
   const rows = tsv.split('\n');
   let paths;
-  rows.forEach((element, index) => {
-    if (!index) {
-      paths = element.split('\t');
+  rows.forEach((row, rowInd) => {
+    if (!rowInd) {
+      paths = row.split('\t');
     } else {
-      const values = element.split('\t');
-      values.forEach((element2, index2) => {
-        const path = `[${index - 1}]${paths[index2]}`;
-        set(jsonObj, path, element2);
+      const values = row.split('\t');
+      values.forEach((value, columInd) => {
+        const path = `${paths[columInd]}`;
+
+        if (value) {
+// TODO if value is integer remove quotes
+          set(rowObj, path, value);
+        }
       });
+      if (Object.keys(rowObj).length) {
+        jsonArr.push(rowObj);
+        rowObj = {};
+      }
     }
   });
-  debug(jsonObj);
-  return jsonObj;
+  return jsonArr;
 };
 
 switch (process.argv[2].slice(-4)) {
@@ -143,9 +151,12 @@ switch (process.argv[2].slice(-4)) {
       });
     });
     break;
-    
+
   default: // test
 
     debug('matched JSON', isEqual(tabToJSON(testTSV), testJSON));
+    debug(tabToJSON(testTSV));
+    debug(testJSON);
+
     debug('matched TSV', JSONToTab(testJSON) === testTSV);
 }
