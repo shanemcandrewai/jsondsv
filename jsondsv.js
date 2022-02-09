@@ -6,7 +6,7 @@
 // by populating the header row of the DSV with paths from the array.
 
 // See below for an example of a nested array (testArray), its
-// equivalent DSV (testTSV) and a simple test runner. With node.js,
+// equivalent DSV formats and a simple test runner. With node.js,
 // the tests can be executed with DEBUG=app node jsondsv.js
 
 const debug = require('debug')('app');
@@ -21,7 +21,8 @@ const calcSeparators = (
   dsv,
   options = { colSep: '\t', lineSep: '\n' },
 ) => {
-// dsv : recursively built DSV
+// columnLabel : currently processed column
+// DSV : recursively built DSV
 // options.colSep : Column separator, default tab
 // options.lineSep : Line separator, default newline
 
@@ -43,26 +44,26 @@ const calcSeparators = (
 };
 
 // Function arrayToDSV returns a DSV from an arbitrarily deep nested
-// array.
+// array input.
 const arrayToDSV = (
   nestedArray,
-  pathElement,
-  sepValueElement,
+  pathRecursive = '',
+  DSVRecursive = '',
   options = { colSep: '\t', lineSep: '\n' },
 ) => {
-// pathElement : recursively built path for each value, used to populate column headers
-// this preserves the object structure in order to reconstruct it later,
-// see function DSVToArray
-// sepValueElement : recursively built separated value table
+// nestedArray : arbitrarily deep nested array input
+// pathRecursive : internal recursively built path for each value
+//   used to populate column headers
+// DSVRecursive : internal recursively built DSV
 // options.colSep : Column separator, default tab
 // options.lineSep : Line separator, default newline
-  let dsv = (sepValueElement === undefined) ? '' : sepValueElement;
+  let dsv = DSVRecursive;
   Object.entries(nestedArray).forEach(([key, value]) => {
     let pathBuild;
     if (Array.isArray(nestedArray)) {
-      pathBuild = (pathElement === undefined) ? `[${key}]` : `${pathElement}[${key}]`;
+      pathBuild = `${pathRecursive}[${key}]`;
     } else {
-      pathBuild = (pathElement === undefined) ? key : `${pathElement}.${key}`;
+      pathBuild = `${pathRecursive}.${key}`;
     }
 
     if (typeof value === 'object') {
@@ -72,7 +73,6 @@ const arrayToDSV = (
       const indEndHeader = dsv.indexOf(options.lineSep);
       const colHeader = dsv.slice(0, indEndHeader);
       const indColumnLabel = colHeader.indexOf(columnLabel);
-
       if (indColumnLabel === -1) {
         if (dsv.length) {
           // Add new column
@@ -94,7 +94,7 @@ const arrayToDSV = (
       }
     }
   });
-  if (pathElement !== undefined && !pathElement.includes('.')) {
+  if (pathRecursive !== '' && !pathRecursive.includes('.')) {
     // End of row
     dsv = `${dsv}${options.lineSep}`;
   }
@@ -102,10 +102,10 @@ const arrayToDSV = (
 };
 
 // Function DSVToArray returns an arbitrarily deep nested array
-// from a DSV. The header of the DSV (first row) contains paths
+// from a dsv input. The header of the dsv (first row) contains paths
 // which are used to reconstruct the array
 const DSVToArray = (dsv, options = { colSep: '\t', lineSep: '\n' }) => {
-// dsv : input delimiter-separated values
+// dsv : input delimiter-separated values string
 // options.colSep : Column separator, default tab
 // options.lineSep : Line separator, default newline
   const jsonArr = [];
@@ -114,15 +114,16 @@ const DSVToArray = (dsv, options = { colSep: '\t', lineSep: '\n' }) => {
   let paths;
   rows.forEach((row, rowInd) => {
     if (!rowInd) {
+      // Extract paths from header of the dsv (first row)
       paths = row.split(options.colSep);
     } else {
       const values = row.split(options.colSep);
       values.forEach((value, columnInd) => {
-        const pathElement = `${paths[columnInd]}`;
+        const pathRecursive = `${paths[columnInd]}`;
         if (value) {
           // remove quotes from value if possible
           const valueNum = value * 1;
-          set(rowObj, pathElement, Number.isNaN(valueNum) ? value : valueNum);
+          set(rowObj, pathRecursive, Number.isNaN(valueNum) ? value : valueNum);
         }
       });
       if (Object.keys(rowObj).length) {
@@ -169,9 +170,18 @@ const testTSV = 'row\trec-0.date\trec-0.tags[0]\trec-1.date\trec-1.url\trec-0.ur
 + '1\t20220116\t\t\t\thttps://example.com/b\tval-0\tval-1\n';
 
 // run tests
-const dsv = arrayToDSV(testArray);
-const arr = DSVToArray(testTSV);
-debug(dsv === testTSV, 'matched array to DSV');
-debug(isEqual(arr, testArray), 'matched DSV to array');
-debug(isEqual(DSVToArray(dsv), testArray), 'matched array to DSV and reverse');
-debug(isEqual(arrayToDSV(arr), testTSV), 'matched DSV to array and reverse');
+const tsv = arrayToDSV(testArray);
+let arr = DSVToArray(testTSV);
+debug(tsv === testTSV, 'matched array to TSV');
+debug(isEqual(arr, testArray), 'matched TSV to array');
+debug(isEqual(DSVToArray(tsv), testArray), 'matched array to TSV and reverse');
+debug(isEqual(arrayToDSV(arr), testTSV), 'matched TSV to array and reverse');
+
+const testCSV = testTSV.replace(/\t/g, ',');
+// TODO pass options
+const csv = arrayToDSV(testArray);
+arr = DSVToArray(testCSV);
+debug(csv === testCSV, 'matched array to CSV');
+debug(isEqual(arr, testArray), 'matched CSV to array');
+debug(isEqual(DSVToArray(csv), testArray), 'matched array to CSV and reverse');
+debug(isEqual(arrayToDSV(arr), testCSV), 'matched CSV to array and reverse');
