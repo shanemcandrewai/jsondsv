@@ -7,17 +7,18 @@
 
 // Use case
 // --------
-
-// For data sets which are fairly tabular, i.e composed of records
+// For arrays which are fairly tabular, i.e. composed of records
 // with similar structure, converting to DSV format facilates
-// processing with spreadhsheats, databases or other common tools.
+// processing with spreadhsheets, databases or other common tools.
 // In addition, the structure of the array can be altered by simply
-// editing the header row and then converting back to an array
+// editing the header row and then converting back to an array.
 
 // Tables with many columns of sparse data (i.e lots of blank cells)
 // can be converted to a more compact array format since empty values
 // are not encoded.
 
+// Examples and testing
+// --------------------
 // See below for an example of a nested array (testArray), its
 // equivalent DSV formats and a simple test runner. With Node.js,
 // the tests can be executed with DEBUG=app node jsondsv.js
@@ -45,9 +46,8 @@ const calcSeparators = (
   const indColumnLabel = headerRow.indexOf(columnLabel);
   const labelNumber = (
     headerRow.slice(0, indColumnLabel).match(colSepRegex) || []).length;
-  debug('xxx', dsv);
-  const lastRow = dsv.split(lineSepRegex)[1];
-  debug('xx2', lastRow);
+  const splitHeader = dsv.split(lineSepRegex);
+  const lastRow = (splitHeader.length > 1) ? splitHeader[1] : '';
   const currColNumber = (lastRow.match(colSepRegex) || []).length;
   const addSeparators = labelNumber - currColNumber;
 
@@ -73,17 +73,11 @@ const arrayToDSV = (
 // options.lineSep : Line separator, default newline
   let dsv = (internal.dsv.length) ? internal.dsv : options.lineSep;
   Object.entries(nestedArray).forEach(([key, value]) => {
-    let pathBuild;
-    if (Array.isArray(nestedArray)) {
-      pathBuild = `${internal.path}[${key}]`;
-    } else {
-      pathBuild = `${internal.path}.${key}`;
-    }
-
+    const path = (Array.isArray(nestedArray)) ? `${internal.path}[${key}]` : `${internal.path}.${key}`;
     if (typeof value === 'object') {
-      dsv = arrayToDSV(value, internal, options);
+      dsv = arrayToDSV(value, options, { path, dsv });
     } else {
-      const columnLabel = pathBuild.split(/\.(.+)/)[1];
+      const columnLabel = path.split(/\.(.+)/)[1];
       const indEndHeader = dsv.indexOf(options.lineSep);
       const headerRow = dsv.slice(0, indEndHeader);
       const indColumnLabel = headerRow.indexOf(columnLabel);
@@ -101,7 +95,7 @@ const arrayToDSV = (
         dsv = `${dsv}${separators}${value}`;
       }
     }
-    if (!internal.path.includes('.')) {
+    if (!path.includes('.')) {
     // End of row
       dsv = `${dsv}${options.lineSep}`;
     }
@@ -180,16 +174,18 @@ const testTSV = 'row\trec-0.date\trec-0.tags[0]\trec-1.date\trec-1.url\trec-0.ur
 // run test TSV
 const tsv = arrayToDSV(testArray);
 const arrayTSV = DSVToArray(testTSV);
-debug(arrayTSV === testTSV, 'matched array to TSV');
-debug(isEqual(arrayTSV, testArray), 'matched TSV to array');
+debug((tsv === testTSV), 'matched array converted to TSV');
+debug(isEqual(arrayTSV, testArray), 'matched converted TSV to array');
 debug(isEqual(DSVToArray(tsv), testArray), 'matched array to TSV and reverse');
 debug(isEqual(arrayToDSV(arrayTSV), testTSV), 'matched TSV to array and reverse');
 
 // run test CSV
 const testCSV = testTSV.replace(/\t/g, ',');
 const csv = arrayToDSV(testArray, { colSep: ',', lineSep: '\n' });
-const arrayCSV = arrayToDSV(testArray, { colSep: ',', lineSep: '\n' });
 debug(csv === testCSV, 'matched array to CSV');
+const arrayCSV = arrayToDSV(testArray, { colSep: ',', lineSep: '\n' });
+// const arrayCSV = arrayToDSV(testArray, { ',', '\n' });
+
 debug(isEqual(arrayCSV, testArray), 'matched CSV to array');
-debug(isEqual(DSVToArray(csv, { colSep: ',', lineSep: '\n' }), testArray), 'matched array to CSV and reverse');
-debug(isEqual(arrayToDSV(arrayCSV, { colSep: ',', lineSep: '\n' }), testCSV), 'matched CSV to array and reverse');
+// debug(isEqual(DSVToArray(csv, { colSep: ',', lineSep: '\n' }), testArray), 'matched array to CSV and reverse');
+// debug(isEqual(arrayToDSV(arrayCSV, { colSep: ',', lineSep: '\n' }), testCSV), 'matched CSV to array and reverse');
