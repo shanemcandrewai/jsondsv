@@ -170,22 +170,20 @@ const testArray = [
 const testTSV = 'row\trec-0.date\trec-0.tags[0]\trec-1.date\trec-1.url\trec-0.url\trec-1.tags[0]\trec-1.tags[1]\n'
 + '0\t20220121\tval-0\t20220116\thttps://example.com/a\n'
 + '1\t20220116\t\t\t\thttps://example.com/b\tval-0\tval-1\n';
+const testCSV = testTSV.replace(/\t/g, ',');
 
 // run test TSV
 const tsv = arrayToDSV(testArray);
-const arrayTSV = DSVToArray(testTSV);
 debug((tsv === testTSV), 'matched array converted to TSV');
+const arrayTSV = DSVToArray(testTSV);
 debug(isEqual(arrayTSV, testArray), 'matched converted TSV to array');
 debug(isEqual(DSVToArray(tsv), testArray), 'matched array to TSV and reverse');
 debug(isEqual(arrayToDSV(arrayTSV), testTSV), 'matched TSV to array and reverse');
 
 // run test CSV
-const testCSV = testTSV.replace(/\t/g, ',');
 const csv = arrayToDSV(testArray, { colSep: ',', lineSep: '\n' });
-debug(csv === testCSV, 'matched array to CSV');
-const arrayCSV = arrayToDSV(testArray, { colSep: ',', lineSep: '\n' });
-// const arrayCSV = arrayToDSV(testArray, { ',', '\n' });
-
-debug(isEqual(arrayCSV, testArray), 'matched CSV to array');
-// debug(isEqual(DSVToArray(csv, { colSep: ',', lineSep: '\n' }), testArray), 'matched array to CSV and reverse');
-// debug(isEqual(arrayToDSV(arrayCSV, { colSep: ',', lineSep: '\n' }), testCSV), 'matched CSV to array and reverse');
+debug((csv === testCSV), 'matched array converted to CSV');
+const arrayCSV = DSVToArray(testCSV, { colSep: ',', lineSep: '\n' });
+debug(isEqual(arrayCSV, testArray), 'matched converted CSV to array');
+debug(isEqual(DSVToArray(csv, { colSep: ',', lineSep: '\n' }), testArray), 'matched array to CSV and reverse');
+debug(isEqual(arrayToDSV(arrayCSV, { colSep: ',', lineSep: '\n' }), testCSV), 'matched CSV to array and reverse');
