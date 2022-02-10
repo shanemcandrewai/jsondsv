@@ -73,7 +73,9 @@ const arrayToDSV = (
 // options.lineSep : Line separator, default newline
   let dsv = (internal.dsv.length) ? internal.dsv : options.lineSep;
   Object.entries(nestedArray).forEach(([key, value]) => {
-    const path = (Array.isArray(nestedArray)) ? `${internal.path}[${key}]` : `${internal.path}.${key}`;
+    const path = (Array.isArray(nestedArray))
+      ? `${internal.path}[${key}]`
+      : `${internal.path}.${key}`;
     if (typeof value === 'object') {
       dsv = arrayToDSV(value, options, { path, dsv });
     } else {
@@ -83,17 +85,13 @@ const arrayToDSV = (
       const indColumnLabel = headerRow.indexOf(columnLabel);
       if (indColumnLabel === -1) {
         // Add new column
-        dsv = (headerRow.length) ? `${headerRow}${options.colSep}${columnLabel}${dsv.slice(indEndHeader)}` : `${columnLabel}${dsv.slice(indEndHeader)}`;
-        const separators = calcSeparators(columnLabel, dsv, options);
-        dsv = `${dsv}${separators}${value}`;
-      } else if (dsv.slice(-1) === options.lineSep) {
-        // Add first value in new row
-        dsv = `${dsv}${value}`;
-      } else {
-        // Calculate column position and add subsequent value in row
-        const separators = calcSeparators(columnLabel, dsv, options);
-        dsv = `${dsv}${separators}${value}`;
+        dsv = (headerRow.length)
+          ? `${headerRow}${options.colSep}${columnLabel}${dsv.slice(indEndHeader)}`
+          : `${columnLabel}${dsv.slice(indEndHeader)}`;
       }
+      // Add value
+      const separators = calcSeparators(columnLabel, dsv, options);
+      dsv = `${dsv}${separators}${value}`;
     }
     if (!path.includes('.')) {
     // End of row
@@ -110,7 +108,6 @@ const DSVToArray = (dsv, options = { colSep: '\t', lineSep: '\n' }) => {
 // options.colSep : Column separator, default tab
 // options.lineSep : Line separator, default newline
   const jsonArr = [];
-  // TODO do need  = {} below?
   let rowObj = {};
   const rows = dsv.split(options.lineSep);
   let paths;
@@ -172,7 +169,7 @@ const testTSV = 'row\trec-0.date\trec-0.tags[0]\trec-1.date\trec-1.url\trec-0.ur
 + '1\t20220116\t\t\t\thttps://example.com/b\tval-0\tval-1\n';
 const testCSV = testTSV.replace(/\t/g, ',');
 
-// run test TSV
+// run TSV tests
 const tsv = arrayToDSV(testArray);
 debug((tsv === testTSV), 'matched array converted to TSV');
 const arrayTSV = DSVToArray(testTSV);
@@ -180,7 +177,7 @@ debug(isEqual(arrayTSV, testArray), 'matched converted TSV to array');
 debug(isEqual(DSVToArray(tsv), testArray), 'matched array to TSV and reverse');
 debug(isEqual(arrayToDSV(arrayTSV), testTSV), 'matched TSV to array and reverse');
 
-// run test CSV
+// run CSV tests
 const csv = arrayToDSV(testArray, { colSep: ',', lineSep: '\n' });
 debug((csv === testCSV), 'matched array converted to CSV');
 const arrayCSV = DSVToArray(testCSV, { colSep: ',', lineSep: '\n' });
